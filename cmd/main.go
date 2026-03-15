@@ -1,33 +1,28 @@
 package main
 
 import (
-	"database/sql"
 	"log"
+	"os"
+	"spotify_mod/internal/db"
 
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 func main() {
-	connStr := "host=localhost port=5432 user=spotify_user password=spotify123 dbname=spotify_stats sslmode=disable"
+	if err := godotenv.Load(); err != nil {
+		log.Printf("file not found: %v", err)
+	}
 
-	db, err := sql.Open("postgres", connStr)
+	connStr := os.Getenv("DATABASE_URL")
+	if connStr == "" {
+		log.Fatal("DATABASE_URL error!")
+	}
+
+	database, err := db.New(connStr)
 	if err != nil {
-		log.Fatal("Error Open DB:", err)
+		log.Fatal("DB error: ", err)
 	}
+	defer database.Close()
 
-	defer db.Close()
-
-	if err := db.Ping(); err != nil {
-		log.Fatal("Error ping DB:", err)
-	}
-
-	var count int
-
-	err = db.QueryRow("SELECT COUNT(*) FROM Users").Scan(&count)
-	if err != nil {
-		log.Fatal("Error Query:", err)
-	}
-
-	log.Println("DB connect!")
-	log.Printf("Table Users: %d count string", count)
 }
